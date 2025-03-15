@@ -13,5 +13,6 @@ It should look like ipod_recover_rename/Music/ + a ton of folders with naming Fx
 
 
 TODO:
+* all
 * add support for 'feat.' where the song is sorted into the first artist's folder
 * add the folder structure support
