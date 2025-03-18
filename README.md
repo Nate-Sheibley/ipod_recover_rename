@@ -1,6 +1,8 @@
 # ipod_recover_rename
 Unscrambles and sorts mused pulled from ipod hard drives according to song metadata 
 
+This has only been tested with .mp3, .m4a, .m4p, .flac, .wav, and .wma files as that is all I have in my library.
+
 # Purpose
 When an ipod had music added to it the ipod stores it in Fxy folders with 4 character strings per song. 
 
