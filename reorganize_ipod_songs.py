@@ -4,7 +4,6 @@
 import pathlib
 import os
 import re
-
 import shutil
 import logging
 
@@ -22,7 +21,9 @@ logging.basicConfig(
 # Set up logging
 logging.info('Starting the script')
 
-# Move all files from music to (created) intermediary
+# Move all files from music to processing folder
+# Takes a destination directory
+# Walks through the directory and moves all files to the destination
 # https://stackoverflow.com/questions/17547273/flatten-complex-directory-structure-in-python
 def move_flatten(destination):
     all_files = []
@@ -34,6 +35,20 @@ def move_flatten(destination):
         for filename in files:
             all_files.append(os.path.join(root, filename))
     for filename in all_files:
+        shutil.move(filename, destination)
+
+# move all album art to the album art directory
+# Takes a source directory and a destination directory
+# Walks through the source directory and moves all image files to the destination
+def move_album_art(source, destination):
+    image_files = []
+    files = os.listdir(source)
+    for file in files:
+        # Check if the file is an image
+        if file.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff')):
+                # If it does, add it to the list
+                image_files.append(after_path / file)
+    for filename in image_files:
         shutil.move(filename, destination)
 
 # Replcaes characters that would cause errors in directory and file names
@@ -100,16 +115,22 @@ if cwd.name == 'ipod_recover_rename':
     logging.info('Path is project root')
 else:
     logging.warning('Path is not project root')
-    logging.error("Recomend navigating to the project root in terminal and opening your chosen idea via the command 'code .'")
+    logging.error("Recomend navigating to the project root in terminal")
+    logging.error("or opening your chosen idea via the command 'code .'")
     raise NameError('Please correct current working directory to the project root')
 
 # Generate relateive path to the music and processing folders
 old_path = cwd / "Music"
 after_path = cwd / "After"
+art_path = cwd / "Album Art"
 
 # Make the after directory if it does not exist
 if not os.path.exists(after_path):
     os.makedirs(after_path)
+
+# Make the art directory if it does not exist
+if not os.path.exists(art_path):
+    os.makedirs(art_path)
 
 # Copy music folder to the after folder so we do not edit the original   
 #TODO: Add support for flattened data
@@ -128,6 +149,9 @@ for file in f_list:
 # Turn it to loose music files
 move_flatten(after_path)
 
+# move the album art to the art directory
+move_album_art(after_path, art_path)
+
 walk = list(os.walk(after_path))
 for path, _, _ in walk[::]:
     if len(os.listdir(path)) == 0:
@@ -137,13 +161,13 @@ for path, _, _ in walk[::]:
 # TODO: Add support for images as album art links
 #   Only dataset I have is already flattened... put them at root?
 #   place them manually and test (do not know how ipods would have handled this)
-files = os.listdir(after_path)
-len_files = len(files)
+loose_files = os.listdir(after_path)
+len_files = len(loose_files)
 count = 1
-for file in files:
-    logging.info('working on %s/%s: %s', count, len_files, file)
-    name_dict = parse_metadata(file)
-    new = move_and_rename(file, name_dict)
+for song_file in loose_files:
+    logging.info('working on %s/%s: %s', count, len_files, song_file)
+    metadata_dict = parse_metadata(song_file)
+    new = move_and_rename(song_file, metadata_dict)
     logging.info('moved and renamed to: %s', new)
     count += 1
 
