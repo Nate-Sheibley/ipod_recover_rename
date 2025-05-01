@@ -21,11 +21,11 @@ logging.basicConfig(
 # Set up logging
 logging.info('Starting the script')
 
+def move_flatten(destination):
 # Move all files from music to processing folder
 # Takes a destination directory
 # Walks through the directory and moves all files to the destination
 # https://stackoverflow.com/questions/17547273/flatten-complex-directory-structure-in-python
-def move_flatten(destination):
     all_files = []
     first_loop_pass = True
     for root, _dirs, files in os.walk(destination):
@@ -37,39 +37,39 @@ def move_flatten(destination):
     for filename in all_files:
         shutil.move(filename, destination)
 
+def move_album_art(source, destination):
 # move all album art to the album art directory
 # Takes a source directory and a destination directory
 # Walks through the source directory and moves all image files to the destination
-def move_album_art(source, destination):
     image_files = []
     files = os.listdir(source)
-    for file in files:
+    for maybe_image in files:
         # Check if the file is an image
-        if file.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff')):
-                # If it does, add it to the list
-                image_files.append(after_path / file)
+        if maybe_image.endswith(('.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff')):
+            # If it does, add it to the list
+            image_files.append(after_path / maybe_image)
     for filename in image_files:
         shutil.move(filename, destination)
 
+def sanitize_string(file_dir_string):
 # Replcaes characters that would cause errors in directory and file names
 # Takes a string and replaces all / and \ with _
-# Returns the new string 
-def sanitize_string(file_dir_string):
+# Returns the new string
     pattern = r'[/\\]'
-    new = re.sub(pattern, "_", file_dir_string)
-    return new.strip()
+    new_name = re.sub(pattern, "_", file_dir_string)
+    return new_name.strip()
 
+def parse_metadata(file_name):
 # Read metadata from the file
 # Takes a file
 # Returns a dictionary with the keys: album, artist, title, file_ext
-def parse_metadata(f):
-    file_path = after_path / f
-    file = TinyTag.get(file_path)
+    file_path = after_path / file_name
+    song_file = TinyTag.get(file_path)
 
     name_dict = {'album':'', 'artist':'', 'title':'', 'ext': ''}
-    artist = file.artist
-    album = file.album
-    title = file.title
+    artist = song_file.artist
+    album = song_file.album
+    title = song_file.title
     suffix = file_path.suffix
 
     for key, val in zip(['artist', 'album', 'title', 'file_ext'],[artist, album, title, suffix]):
@@ -79,10 +79,10 @@ def parse_metadata(f):
             name_dict[key] = 'Metadata_DNE'
     return name_dict
 
+def move_and_rename(garbled_filename, name_dict):
 # Move the file to the directory struture (artist/album/file) and rename it to the song title
 # takes a file and the associated parsed metadata dictionary
 # returns the new file path
-def move_and_rename(file, name_dict):
     # build folder and file paths
     artist_path = after_path / name_dict['artist']
     album_path = artist_path /  name_dict['album']
@@ -98,7 +98,7 @@ def move_and_rename(file, name_dict):
         os.mkdir(album_path)
     # move the song to the album-artist folder and rename it
     renamed_ordered_path = album_path / f'{title}{suffix}'
-    shutil.move(after_path / file, renamed_ordered_path)
+    shutil.move(after_path / garbled_filename, renamed_ordered_path)
 
     return renamed_ordered_path
 
@@ -132,7 +132,7 @@ if not os.path.exists(after_path):
 if not os.path.exists(art_path):
     os.makedirs(art_path)
 
-# Copy music folder to the after folder so we do not edit the original   
+# Copy music folder to the after folder so we do not edit the original
 #TODO: Add support for flattened data
     # currently. this and move_flatten() only work if there is folder structure
     # potentially out of scope because ipod has folder structure always
@@ -145,7 +145,7 @@ for file in f_list:
     else:
         shutil.copytree(old_path / file, after_path / file)
 
-# flatten the after directory so there is not folder structure 
+# flatten the after directory so there is not folder structure
 # Turn it to loose music files
 move_flatten(after_path)
 
@@ -164,10 +164,10 @@ for path, _, _ in walk[::]:
 loose_files = os.listdir(after_path)
 len_files = len(loose_files)
 count = 1
-for song_file in loose_files:
-    logging.info('working on %s/%s: %s', count, len_files, song_file)
-    metadata_dict = parse_metadata(song_file)
-    new = move_and_rename(song_file, metadata_dict)
+for flattened_file in loose_files:
+    logging.info('working on %s/%s: %s', count, len_files, flattened_file)
+    metadata_dict = parse_metadata(flattened_file)
+    new = move_and_rename(flattened_file, metadata_dict)
     logging.info('moved and renamed to: %s', new)
     count += 1
 
