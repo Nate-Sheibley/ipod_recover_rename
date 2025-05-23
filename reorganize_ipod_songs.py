@@ -136,6 +136,7 @@ if not os.path.exists(art_path):
 #TODO: Add support for flattened data
     # currently. this and move_flatten() only work if there is folder structure
     # potentially out of scope because ipod has folder structure always
+    # make a check_not_flattened() function 
 f_list = os.listdir(old_path)
 # copies music to after folder for processing of a copy of the music, ensuring no loss
 for file in f_list:
@@ -159,16 +160,16 @@ for path, _, _ in walk[::]:
         os.removedirs(path)
 
 # TODO: Add support for images as album art links
-#   Only dataset I have is already flattened... put them at root?
-#   place them manually and test (do not know how ipods would have handled this)
+#   As of now, handled by moving all images to the album art folder
+#   and removing the empty directories
 loose_files = os.listdir(after_path)
 len_files = len(loose_files)
-count = 1
+COUNT = 1
 for flattened_file in loose_files:
-    logging.info('working on %s/%s: %s', count, len_files, flattened_file)
+    logging.info('working on %s/%s: %s', COUNT, len_files, flattened_file)
     metadata_dict = parse_metadata(flattened_file)
     new = move_and_rename(flattened_file, metadata_dict)
-    logging.info('moved and renamed to: %s', new)
-    count += 1
+    logging.info('moved and renamed to: %s', new) # using loguru, would be success level
+    COUNT += 1
 
 logging.info('Finished processing all files')
